@@ -1,14 +1,20 @@
 // BRINGING IN PACKAGES FOR APP
 const inquirer = require('inquirer');
+const fs = require('fs');
+
+const Employee = require('./lib/Employee');
 const Manager = require('./lib/Manager');
 const Engineer = require('./lib/Engineer');
 const Intern = require('./lib/Intern');
 
+
 // GLOBAL VARIABLES
 let team = [];
 
+
 // CALL FUNCTION TO START PROGRAM AND INITIALIZE PROMPTS
 addNewMember();
+
 
 // FUNCTION TO PROMPT USER TO ADD A TEAM MEMBER
 function addNewMember() {
@@ -35,9 +41,14 @@ inquirer.prompt(userPrompts)
             case 'Intern':
                 internFunc();
                 break;
+
+            case 'Done':
+                generateHtml();
+                break;
         }
     }) 
-}
+};
+
 
 // FUNCTION TO ADD MANAGER
 const managerFunc = () => {
@@ -59,17 +70,19 @@ const managerFunc = () => {
         },
         {
             type: 'input',
-            name: 'office',
+            name: 'info',
             message: 'What is managers office number?',
         },
     ]
 
     inquirer.prompt(managerPrompts)
         .then(res => {
-            const newManager = new Manager(res.name, res.id, res.email, res.office);
-            console.log(newManager);
+            const newManager = new Manager(res.name, res.id, res.email, res.info);
+            team.push(newManager);
+            addNewMember();
         })
 };
+
 
 // FUNCTION TO ADD ENGINEER
 const engineerFunc = () => {
@@ -91,15 +104,21 @@ const engineerFunc = () => {
         },
         {
             type: 'input',
-            name: 'github',
-            message: 'What is engineers office number?',
+            name: 'info',
+            message: 'What is engineers github username?',
         },
     ]
 
-    inquirer.prompt(engineerPrompts);
+    inquirer.prompt(engineerPrompts)
+        .then(res => {
+            const newEngineer = new Engineer(res.name, res.id, res.email, `https://github.com/${res.info}`);
+            team.push(newEngineer);
+            addNewMember();
+        })
 };
 
-// FUNCTION TO ADD ENGINEER
+
+// FUNCTION TO ADD INTERN
 const internFunc = () => {
     const internPrompts = [
         {
@@ -119,11 +138,68 @@ const internFunc = () => {
         },
         {
             type: 'input',
-            name: 'school',
+            name: 'info',
             message: 'Where does intern go to school?',
         },
     ]
 
-    inquirer.prompt(internPrompts);
+    inquirer.prompt(internPrompts)
+        .then(res => {
+            const newIntern = new Intern(res.name, res.id, res.email, res.info);
+            team.push(newIntern);
+            addNewMember();
+        })
 };
 
+
+// GENERATE HTML
+function generateHtml() {
+    let html = `
+<!DOCTYPE html>
+    <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>My Employees</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" />
+            <link rel="stylesheet" href="./styles.css">
+        </head>
+            
+        <body>
+            
+            <header>
+                <h1>My Employees</h1>
+            </header>
+
+            <main>
+                <div class="container row">
+
+    `;
+
+    for (let i = 0; i < team.length; i++) {
+        html += `
+                    <div class="col-md-2 card" style="width: 10rem;">
+                        <h2><b>Name: </b>${team[i].name}</h2>
+                        <h3>${team[i].getJob()}</h3>
+                        <p><b>ID: </b>${team[i].id}</p>
+                        <p><b>Email: </b>${team[i].email}</p>
+                        <p>${team[i].info}</p>
+                    </div>
+      `;
+    }
+
+    html += `
+                </div>
+            </main>
+        </body>
+</html>
+`;
+
+fs.writeFile('./dist/index.html', html, (err) => {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log('HTML file succesfully created!!');
+    }
+  });
+} 
